@@ -159,3 +159,4 @@ cython_debug/
 # certs
 *.pem
 *.key
+.file_activity_report.json
