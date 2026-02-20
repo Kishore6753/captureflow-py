@@ -40,16 +40,25 @@ class DefinitionVisitor(ast.NodeVisitor):
         self.definitions.append(("function", node))
         # Check if this function has FastAPI decorators indicative of an endpoint
         for decorator in node.decorator_list:
-            if isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Attribute):
+            if isinstance(decorator, ast.Call) and isinstance(
+                decorator.func, ast.Attribute
+            ):
                 # TODO, app() is just a pattern for WSGI/ASGI apps, instead we need to inspect actual object instance
-                if isinstance(decorator.func.value, ast.Name) and decorator.func.value.id == "app":
+                if (
+                    isinstance(decorator.func.value, ast.Name)
+                    and decorator.func.value.id == "app"
+                ):
                     self.fastapi_endpoints.append(
                         {
                             "type": decorator.func.attr,  # HTTP method type, e.g., get, post
                             "function": node.name,
                             "file_path": self.filepath,
                             "line_start": node.lineno,
-                            "line_end": node.end_lineno if hasattr(node, "end_lineno") else node.lineno,
+                            "line_end": (
+                                node.end_lineno
+                                if hasattr(node, "end_lineno")
+                                else node.lineno
+                            ),
                         }
                     )
 
@@ -60,7 +69,9 @@ class DefinitionVisitor(ast.NodeVisitor):
                 {
                     "file_path": self.filepath,
                     "line_start": node.lineno,
-                    "line_end": node.end_lineno if hasattr(node, "end_lineno") else node.lineno,
+                    "line_end": (
+                        node.end_lineno if hasattr(node, "end_lineno") else node.lineno
+                    ),
                 }
             )
         self.generic_visit(node)
@@ -85,7 +96,9 @@ class RepoHelper:
             for repo in installation.get_repos():
                 if repo.html_url == repo_url:
                     return repo
-        raise ValueError(f"No matching installation was found for {repo_url}. Maybe the app is not installed yet.")
+        raise ValueError(
+            f"No matching installation was found for {repo_url}. Maybe the app is not installed yet."
+        )
 
     def get_installation_by_url(self, repo_url: str) -> Optional[Repository.Repository]:
         installations = self.github_integration.get_installations()
@@ -94,7 +107,9 @@ class RepoHelper:
             for repo in installation.get_repos():
                 if repo.html_url == repo_url:
                     return installation
-        raise ValueError(f"No matching installation was found for {repo_url}. Maybe the app is not installed yet.")
+        raise ValueError(
+            f"No matching installation was found for {repo_url}. Maybe the app is not installed yet."
+        )
 
     def enrich_callgraph_with_github_context(self, callgraph: CallGraph) -> None:
         for node_id in callgraph.graph.nodes:
@@ -131,10 +146,19 @@ class RepoHelper:
                     {
                         "file_path": file_content.path,
                         "line_start": node.lineno,
-                        "line_end": (node.end_lineno if hasattr(node, "end_lineno") else node.lineno),
+                        "line_end": (
+                            node.end_lineno
+                            if hasattr(node, "end_lineno")
+                            else node.lineno
+                        ),
                         "content": "\n".join(
                             file_data.splitlines()[
-                                node.lineno - 1 : (node.end_lineno if hasattr(node, "end_lineno") else node.lineno)
+                                node.lineno
+                                - 1 : (
+                                    node.end_lineno
+                                    if hasattr(node, "end_lineno")
+                                    else node.lineno
+                                )
                             ]
                         ),
                     }
@@ -149,7 +173,9 @@ class RepoHelper:
         except Exception as e:
             logger.exception(f"Error processing {file_content.path}: {e}")
 
-    def lookup_index(self, symbol_name: str, symbol_type: str) -> Optional[Dict[str, Any]]:
+    def lookup_index(
+        self, symbol_name: str, symbol_type: str
+    ) -> Optional[Dict[str, Any]]:
         return self.index.get(symbol_type, {}).get(symbol_name)
 
     def get_fastapi_app(self) -> List[Dict[str, Any]]:
@@ -216,9 +242,13 @@ class RepoHelper:
 
         # Load the whole file content
         try:
-            file_content = self.gh_repo.get_contents(def_info["file_path"]).decoded_content.decode("utf-8")
+            file_content = self.gh_repo.get_contents(
+                def_info["file_path"]
+            ).decoded_content.decode("utf-8")
         except Exception as e:
-            logger.exception(f"Error fetching file content for {def_info['file_path']}: {e}")
+            logger.exception(
+                f"Error fetching file content for {def_info['file_path']}: {e}"
+            )
             file_content = "Error loading file content"
 
         # Update the node with GitHub data
@@ -264,12 +294,18 @@ class RepoHelper:
 
         # Replace old function implementation with new content within the source code lines
         new_code_lines = (
-            source_code_lines[: start_line - 1] + new_implementation.splitlines() + source_code_lines[end_line:]
+            source_code_lines[: start_line - 1]
+            + new_implementation.splitlines()
+            + source_code_lines[end_line:]
         )
         updated_source_code = "\n".join(new_code_lines)
 
-        fix_styles_query = gpt_helper.generate_after_insert_style_query(updated_source_code, function_name)
-        updated_source_code = gpt_helper.extract_first_code_block(gpt_helper.call_chatgpt(fix_styles_query))
+        fix_styles_query = gpt_helper.generate_after_insert_style_query(
+            updated_source_code, function_name
+        )
+        updated_source_code = gpt_helper.extract_first_code_block(
+            gpt_helper.call_chatgpt(fix_styles_query)
+        )
 
         # Create a new branch for this update
         new_branch_name = f"update-{function_name}-{uuid.uuid4().hex}"
@@ -294,21 +330,27 @@ class RepoHelper:
         for exception_node in exception_context["exception_nodes"]:
             node_details = exception_node["node_details"]
             exception_info = node_details.get("exception_info", {})
+            exception_context_md += f"- **Function**: {node_details['function_name']} at `{node_details['file_line']}`\n"
             exception_context_md += (
-                f"- **Function**: {node_details['function_name']} at `{node_details['file_line']}`\n"
+                f"  - **Exception Type**: {exception_info.get('type')}\n"
             )
-            exception_context_md += f"  - **Exception Type**: {exception_info.get('type')}\n"
-            exception_context_md += f"  - **Exception Value**: {exception_info.get('value')}\n"
+            exception_context_md += (
+                f"  - **Exception Value**: {exception_info.get('value')}\n"
+            )
             exception_context_md += "\n"
 
         change_reasoning_md = f"### Change Reasoning\n\n{change_reasoning}"
 
         pr_body = f"""This pull request updates the implementation of `{node["function"]}` to address the identified issues. Below is the context and reasoning behind these changes.\n\n{exception_context_md}\n\n{change_reasoning_md}\n\n```"""
 
-        pr = self.gh_repo.create_pull(title=pr_title, body=pr_body, head=new_branch_name, base="main")
+        pr = self.gh_repo.create_pull(
+            title=pr_title, body=pr_body, head=new_branch_name, base="main"
+        )
         logger.info(f"Pull request created: {pr.html_url}")
 
-    def create_pull_request_with_test(self, test_file_name: str, test_code: str, branch_name_suffix: str):
+    def create_pull_request_with_test(
+        self, test_file_name: str, test_code: str, branch_name_suffix: str
+    ):
         """
         Creates a new pull request with a new test file in the 'captureflow_tests/' directory.
 
@@ -327,17 +369,25 @@ class RepoHelper:
 
         # Create the test file on the new branch
         commit_message = f"Add new test for {test_file_name}"
-        self.gh_repo.create_file(test_file_path, commit_message, test_code, branch=new_branch_name)
+        self.gh_repo.create_file(
+            test_file_path, commit_message, test_code, branch=new_branch_name
+        )
 
         # Create a pull request from the new branch to the main branch
         pr_title = f"Add new test for {test_file_name}"
         pr_body = "This pull request adds a new test file to improve the test coverage of the repository."
 
-        pr = self.gh_repo.create_pull(title=pr_title, body=pr_body, head=new_branch_name, base="main")
+        pr = self.gh_repo.create_pull(
+            title=pr_title, body=pr_body, head=new_branch_name, base="main"
+        )
         logger.info(f"Pull request created: {pr.html_url}")
 
     def create_pull_request_with_multiple_tests(
-        self, target_endpoint: str, files_dict: dict, branch_name_suffix: str, coverage_diff: dict
+        self,
+        target_endpoint: str,
+        files_dict: dict,
+        branch_name_suffix: str,
+        coverage_diff: dict,
     ):
         """
         Creates a new pull request with multiple test files in the 'captureflow_tests/' directory.
@@ -358,22 +408,28 @@ class RepoHelper:
                 commit_message = f"Add test {file_path}"
             elif ".json" in file_path or ".pickle" in file_path:
                 commit_message = f"Add cf-asset {file_path}"
-            self.gh_repo.create_file(test_file_path, commit_message, file_content, branch=new_branch_name)
+            self.gh_repo.create_file(
+                test_file_path, commit_message, file_content, branch=new_branch_name
+            )
 
         # Create a markdown table from the coverage difference
         markdown_table = "### Test Coverage Difference\n\n"
-        markdown_table += "| File | Previous Coverage (%) | New Coverage (%) | Change (%) |\n"
-        markdown_table += "|------|-----------------------|------------------|------------|\n"
+        markdown_table += (
+            "| File | Previous Coverage (%) | New Coverage (%) | Change (%) |\n"
+        )
+        markdown_table += (
+            "|------|-----------------------|------------------|------------|\n"
+        )
         for file, stats in coverage_diff.items():
             if stats["change"] > 0:  # Highlight only files with coverage growth
-                markdown_table += (
-                    f"| {file} | {stats['previous']:.2f} | {stats['new']:.2f} | **+{stats['change']:.2f}** |\n"
-                )
+                markdown_table += f"| {file} | {stats['previous']:.2f} | {stats['new']:.2f} | **+{stats['change']:.2f}** |\n"
         markdown_table += "---"
 
         # Create a pull request from the new branch to the main branch
         pr_title = f"CaptureFlow: add tests for {target_endpoint}"
         pr_body = f"This pull request adds new test file to improve the test coverage of the repository. Below is the summary of test coverage improvements:\n\n{markdown_table}"
 
-        pr = self.gh_repo.create_pull(title=pr_title, body=pr_body, head=new_branch_name, base="main")
+        pr = self.gh_repo.create_pull(
+            title=pr_title, body=pr_body, head=new_branch_name, base="main"
+        )
         logger.info(f"Pull request created: {pr.html_url}")

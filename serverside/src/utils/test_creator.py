@@ -36,12 +36,16 @@ class TestCoverageCreator:
                 if app_path:
                     self.process_endpoint(graph, endpoint_invoked, app_path)
                 else:
-                    logger.error(f"App path could not be determined for endpoint {endpoint_invoked['function']}")
+                    logger.error(
+                        f"App path could not be determined for endpoint {endpoint_invoked['function']}"
+                    )
             else:
                 logger.info("No endpoint was clearly invoked in this trace.")
 
     def process_endpoint(self, graph, endpoint_invoked, app_path):
-        logger.info(f"Processing endpoint {endpoint_invoked['function']} in app at {app_path}")
+        logger.info(
+            f"Processing endpoint {endpoint_invoked['function']} in app at {app_path}"
+        )
         initial_test_output = self.docker_executor.execute_with_new_files({})
         endpoint_coverage = self.calculate_endpoint_coverage(initial_test_output)
 
@@ -54,22 +58,32 @@ class TestCoverageCreator:
             serialized_context = self.serialize_interactions(all_interactions)
             desired_test_path = "serverside/tests/test_app.py"
             prompt = self.generate_test_prompt(
-                function_context, serialized_context, graph, entry_point_node_id, app_path
+                function_context,
+                serialized_context,
+                graph,
+                entry_point_node_id,
+                app_path,
             )
-            pytest_full_code, files_dict, test_diff = self.generate_and_test_pytest_code(
-                prompt, entry_point_node_id, initial_test_output, desired_test_path
+            pytest_full_code, files_dict, test_diff = (
+                self.generate_and_test_pytest_code(
+                    prompt, entry_point_node_id, initial_test_output, desired_test_path
+                )
             )
 
             if pytest_full_code:
                 test_file_name = f"serverside/tests/test_{graph.graph.nodes[entry_point_node_id]['function'].replace(' ', '_').lower()}.py"
                 self.repo_helper.create_pull_request_with_test(
-                    test_file_name, pytest_full_code, graph.graph.nodes[entry_point_node_id]["function"]
+                    test_file_name,
+                    pytest_full_code,
+                    graph.graph.nodes[entry_point_node_id]["function"],
                 )
                 # self.repo_helper.create_pull_request_with_multiple_tests(files_dict, target_endpoint, f"test", test_diff)
             else:
                 logger.error("Failed to generate or validate pytest code.")
         else:
-            logger.error("No suitable entry point function was selected for coverage improvement.")
+            logger.error(
+                "No suitable entry point function was selected for coverage improvement."
+            )
 
     def build_graphs_from_redis(self) -> List[CallGraph]:
         graphs = []
@@ -82,24 +96,34 @@ class TestCoverageCreator:
         return graphs
 
     def generate_and_test_pytest_code(
-        self, prompt, entry_point_node_id, initial_test_output, desired_test_path="serverside/tests/test_app.py"
+        self,
+        prompt,
+        entry_point_node_id,
+        initial_test_output,
+        desired_test_path="serverside/tests/test_app.py",
     ):
         gpt_response = self.gpt_helper.call_chatgpt(prompt)
         pytest_full_code = self.gpt_helper.extract_first_code_block(gpt_response)
 
         if pytest_full_code:
-            logger.info(f"Generated full pytest code for function {entry_point_node_id}:\n{pytest_full_code}")
+            logger.info(
+                f"Generated full pytest code for function {entry_point_node_id}:\n{pytest_full_code}"
+            )
             new_test_files = {
                 # TODO: add test scripts
                 # TODO: add assets
             }
-            modified_test_output = self.docker_executor.execute_with_new_files(new_test_files)
+            modified_test_output = self.docker_executor.execute_with_new_files(
+                new_test_files
+            )
             # TODO: re-iterate with GPT in case of trivial errors
             # Re-iterate, until acceptance criteria is met
             # pytest_raw_output = modified_test_output
 
             # After updating the tests, compare the coverage to see the improvements
-            test_diff = self.compare_test_coverage(initial_test_output, modified_test_output)
+            test_diff = self.compare_test_coverage(
+                initial_test_output, modified_test_output
+            )
             logger.info(f"Test coverage difference: {test_diff}")
 
             # Return the full pytest code for additional actions (like creating files or PRs)
@@ -150,13 +174,18 @@ class TestCoverageCreator:
                 )
         return uncovered_lines
 
-    def select_function_to_cover(self, graph: CallGraph, endpoint_coverage) -> Optional[str]:
+    def select_function_to_cover(
+        self, graph: CallGraph, endpoint_coverage
+    ) -> Optional[str]:
         """Select the least covered FastAPI endpoint function from the graph."""
         least_covered = None
         min_coverage = float("inf")
         for endpoint, coverage in endpoint_coverage:
             for node_id, data in graph.graph.nodes(data=True):
-                if data.get("function") == endpoint["function"] and coverage < min_coverage:
+                if (
+                    data.get("function") == endpoint["function"]
+                    and coverage < min_coverage
+                ):
                     least_covered = node_id
                     min_coverage = coverage
 
@@ -171,15 +200,29 @@ class TestCoverageCreator:
                 previous = initial_data.coverage
                 new = new_data.coverage
                 change = new - previous
-                coverage_diff[file_path] = {"previous": previous, "new": new, "change": change}
-                logger.info(f"Coverage for {file_path}: {previous}% -> {new}% (Change: {change}%)")
+                coverage_diff[file_path] = {
+                    "previous": previous,
+                    "new": new,
+                    "change": change,
+                }
+                logger.info(
+                    f"Coverage for {file_path}: {previous}% -> {new}% (Change: {change}%)"
+                )
             else:
-                coverage_diff[file_path] = {"previous": initial_data.coverage, "new": "N/A", "change": "N/A"}
+                coverage_diff[file_path] = {
+                    "previous": initial_data.coverage,
+                    "new": "N/A",
+                    "change": "N/A",
+                }
 
         return coverage_diff
 
-    def analyze_external_interactions_with_chatgpt(self, node_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        function_implementation = node_data.get("github_function_implementation", {}).get("content", "Not available")
+    def analyze_external_interactions_with_chatgpt(
+        self, node_data: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        function_implementation = node_data.get(
+            "github_function_implementation", {}
+        ).get("content", "Not available")
         json_example = {
             "interactions": [
                 {
@@ -218,7 +261,11 @@ class TestCoverageCreator:
             return []
 
     def analyze_graph_for_interactions_and_context(
-        self, graph: CallGraph, node_id: str, interactions: List[Dict[str, Any]], function_context: List[str]
+        self,
+        graph: CallGraph,
+        node_id: str,
+        interactions: List[Dict[str, Any]],
+        function_context: List[str],
     ):
         node_data = graph.graph.nodes[node_id]
         if node_data.get("is_node_compressed", False):
@@ -232,22 +279,37 @@ class TestCoverageCreator:
                     "details": f"Mock entire module due to complexity and interdependencies in {node_data.get('function', 'Unknown Function')}.",
                     "mock_idea": "Use MagicMock or create a fixture to simulate behavior.",
                     "certainty": "high",
-                    "arguments": node_data.get("arguments", {}),  # Capture arguments from node data
-                    "return_value": node_data.get("return_value", {}),  # Capture return value from node data
+                    "arguments": node_data.get(
+                        "arguments", {}
+                    ),  # Capture arguments from node data
+                    "return_value": node_data.get(
+                        "return_value", {}
+                    ),  # Capture return value from node data
                 }
             )
         elif (
-            "github_function_implementation" in node_data and node_data["github_function_implementation"] != "not_found"
+            "github_function_implementation" in node_data
+            and node_data["github_function_implementation"] != "not_found"
         ):
-            node_interactions = self.analyze_external_interactions_with_chatgpt(node_data)
+            node_interactions = self.analyze_external_interactions_with_chatgpt(
+                node_data
+            )
             for interaction in node_interactions:
-                interaction["function"] = node_data.get("function", "Unknown Function")  # Ensure function key exists
-                interaction["arguments"] = node_data.get("arguments", {})  # Capture arguments from node data
-                interaction["return_value"] = node_data.get("return_value", {})  # Capture return value from node data
+                interaction["function"] = node_data.get(
+                    "function", "Unknown Function"
+                )  # Ensure function key exists
+                interaction["arguments"] = node_data.get(
+                    "arguments", {}
+                )  # Capture arguments from node data
+                interaction["return_value"] = node_data.get(
+                    "return_value", {}
+                )  # Capture return value from node data
             interactions.extend(node_interactions)
 
         for successor in graph.graph.successors(node_id):
-            self.analyze_graph_for_interactions_and_context(graph, successor, interactions, function_context)
+            self.analyze_graph_for_interactions_and_context(
+                graph, successor, interactions, function_context
+            )
 
     def generate_import_statement(self, app_path, desired_test_path):
         # Define the root module name (folder before 'tests')
@@ -255,13 +317,19 @@ class TestCoverageCreator:
         root_module = os.path.basename(os.path.dirname(test_dir))
 
         # Get the relative path from the test directory to the app file, excluding the root module from the path
-        relative_path_from_root = os.path.relpath(app_path, start=os.path.join(test_dir, ".."))
+        relative_path_from_root = os.path.relpath(
+            app_path, start=os.path.join(test_dir, "..")
+        )
 
         # Normalize the path for use in an import statement
-        normalized_import_path = relative_path_from_root.replace(os.path.sep, ".").rstrip(".py")
+        normalized_import_path = relative_path_from_root.replace(
+            os.path.sep, "."
+        ).rstrip(".py")
 
         # Form the import statement
-        import_statement = f"from {root_module}.{normalized_import_path} import your_fastapi_instance"
+        import_statement = (
+            f"from {root_module}.{normalized_import_path} import your_fastapi_instance"
+        )
 
         return import_statement
 
@@ -273,16 +341,25 @@ class TestCoverageCreator:
             file_path = os.path.join(self.interactions_dir, file_name)
             with open(file_path, "w") as file:
                 json.dump(
-                    {"arguments": interaction["arguments"], "return_value": interaction["return_value"]}, file, indent=4
+                    {
+                        "arguments": interaction["arguments"],
+                        "return_value": interaction["return_value"],
+                    },
+                    file,
+                    indent=4,
                 )
             serialized_data_paths.append(file_path)
         return serialized_data_paths
 
-    def generate_test_prompt(self, function_context, serialized_context, graph, entry_point_node_id, app_path):
+    def generate_test_prompt(
+        self, function_context, serialized_context, graph, entry_point_node_id, app_path
+    ):
         # Extract detailed inputs and outputs for the endpoint
         entry_point_data = graph.graph.nodes[entry_point_node_id]
         arguments = json.dumps(entry_point_data.get("arguments", {}), indent=2)
-        expected_output = entry_point_data["return_value"].get("json_serialized", "No output captured")
+        expected_output = entry_point_data["return_value"].get(
+            "json_serialized", "No output captured"
+        )
 
         mock_instructions = "\n".join(
             f"Use the data from '{file_path}' to mock interactions as described in the file."

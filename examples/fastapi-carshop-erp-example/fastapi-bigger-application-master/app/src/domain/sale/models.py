@@ -13,8 +13,7 @@ class Sale(Base):
     buyer_id = Column(Integer, ForeignKey("buyers.id"))
     seller_id = Column(Integer, ForeignKey("sellers.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     car = relationship("Car", back_populates="sale")
     buyer = relationship("Buyer", back_populates="sale")
     seller = relationship("Seller", back_populates="sale")
-    

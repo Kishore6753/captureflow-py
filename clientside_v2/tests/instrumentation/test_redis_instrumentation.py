@@ -37,7 +37,9 @@ def test_redis_instrumentation(span_exporter):
 
     # Retrieve the spans
     spans = span_exporter.get_finished_spans()
-    redis_spans = [span for span in spans if span.attributes.get("db.system") == "redis"]
+    redis_spans = [
+        span for span in spans if span.attributes.get("db.system") == "redis"
+    ]
 
     assert len(redis_spans) >= 2, "Expected at least two Redis spans"
 

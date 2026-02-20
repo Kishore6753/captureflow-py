@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from sqlalchemy.orm import Session
 
-from ..dependencies import get_db, get_token_header
+from ..dependencies import get_db
 
 from ..domain.stock import service, schemas
 
@@ -21,6 +21,7 @@ router = APIRouter(
     dependencies=[],
     responses={404: {"description": "Not found"}},
 )
+
 
 @router.post("/", response_model=schemas.Stock, status_code=201)
 def create_stock(stock: schemas.StockCreate, db: Session = Depends(get_db)):
@@ -58,4 +59,3 @@ def delete_stock(stock_id: int, db: Session = Depends(get_db)):
     if db_stock is None:
         raise HTTPException(status_code=404, detail=STOCK_DOES_NOT_EXIST_ERROR)
     return service.remove_stock(db, db_stock=db_stock)
-

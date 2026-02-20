@@ -12,7 +12,7 @@ def _decode_body(body):
         if isinstance(body, bytes):
             return body.decode("utf-8")
         return body
-    except Exception as e:
+    except Exception:
         return body
 
 
@@ -29,14 +29,16 @@ def _instrument_fastapi(tracer_provider: TracerProvider):
         def client_response_hook(span: FastAPISpan, message: dict):
             if span and span.is_recording():
                 if "body" in message:
-                    span.set_attribute("http.response.body", _decode_body(message["body"]))
+                    span.set_attribute(
+                        "http.response.body", _decode_body(message["body"])
+                    )
 
         FastAPIInstrumentor().instrument(
             client_request_hook=client_request_hook,
             client_response_hook=client_response_hook,
             tracer_provider=tracer_provider,
         )
-    except ImportError as e:
+    except ImportError:
         pass
 
 
@@ -63,7 +65,7 @@ def _instrument_requests(tracer_provider: TracerProvider):
             response_hook=response_hook,
             tracer_provider=tracer_provider,
         )
-    except ImportError as e:
+    except ImportError:
         pass
 
 
@@ -78,7 +80,9 @@ def _instrument_httpx(tracer_provider=None):
         span.set_attribute("http.request.url", str(request.url))
         span.set_attribute("http.request.headers", str(dict(request.headers)))
         if request.content:
-            span.set_attribute("http.request.body", request.content.decode("utf-8", errors="replace"))
+            span.set_attribute(
+                "http.request.body", request.content.decode("utf-8", errors="replace")
+            )
 
     def _capture_response(response: httpx.Response, span: trace.Span):
         span.set_attribute("http.response.body", response.text)
@@ -95,7 +99,9 @@ def _instrument_httpx(tracer_provider=None):
             _capture_response(response, span)
             return response
 
-    async def async_instrumented_send(self, request: httpx.Request, **kwargs) -> httpx.Response:
+    async def async_instrumented_send(
+        self, request: httpx.Request, **kwargs
+    ) -> httpx.Response:
         with tracer.start_as_current_span(
             f"HTTP {request.method}",
             kind=SpanKind.CLIENT,
@@ -134,7 +140,9 @@ def _instrument_flask(tracer_provider: TracerProvider):
 
         def before_request():
             tracer = trace.get_tracer(__name__)
-            span = tracer.start_span(f"HTTP {request.method} {request.path}", kind=SpanKind.SERVER)
+            span = tracer.start_span(
+                f"HTTP {request.method} {request.path}", kind=SpanKind.SERVER
+            )
             g.span = span
 
             span.set_attribute("http.method", request.method)
@@ -149,7 +157,9 @@ def _instrument_flask(tracer_provider: TracerProvider):
             if span and span.is_recording():
                 span.set_attribute("http.response.headers", str(dict(response.headers)))
                 if response.data:
-                    span.set_attribute("http.response.body", _decode_body(response.data))
+                    span.set_attribute(
+                        "http.response.body", _decode_body(response.data)
+                    )
                 span.set_attribute("http.status_code", response.status_code)
                 span.end()
 
@@ -190,7 +200,9 @@ def _instrument_sqlalchemy(tracer_provider=None):
         return False
 
     @event.listens_for(Engine, "before_cursor_execute")
-    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    def before_cursor_execute(
+        conn, cursor, statement, parameters, context, executemany
+    ):
         context._span = tracer.start_span(
             name=f"SQLAlchemy: {statement.split()[0]}",
             kind=SpanKind.CLIENT,
@@ -208,16 +220,22 @@ def _instrument_sqlalchemy(tracer_provider=None):
         if hasattr(context, "_span"):
             span = context._span
             if cursor.description:
-                span.set_attribute("db.result_columns", str([desc[0] for desc in cursor.description]))
+                span.set_attribute(
+                    "db.result_columns", str([desc[0] for desc in cursor.description])
+                )
             if hasattr(cursor, "rowcount"):
                 span.set_attribute("db.row_count", cursor.rowcount)
 
             if context._is_select:
                 try:
                     with conn.connection.cursor() as new_cursor:
-                        new_cursor.execute(context._original_statement, context._original_parameters)
+                        new_cursor.execute(
+                            context._original_statement, context._original_parameters
+                        )
                         columns = [col[0] for col in new_cursor.description]
-                        rows = [dict(zip(columns, row)) for row in new_cursor.fetchall()]
+                        rows = [
+                            dict(zip(columns, row)) for row in new_cursor.fetchall()
+                        ]
                         span.set_attribute("db.result_data", str(rows))
                 except Exception as e:
                     span.set_attribute("db.result_capture_error", str(e))
@@ -229,19 +247,21 @@ def _instrument_sqlalchemy(tracer_provider=None):
 
 def _instrument_dbapi(tracer_provider: TracerProvider):
     try:
-        from opentelemetry.instrumentation.dbapi import DatabaseApiIntegration
+        # Import inside try to keep this integration optional.
+        import opentelemetry.instrumentation.dbapi  # noqa: F401
 
         pass
-    except ImportError as e:
+    except ImportError:
         pass
 
 
 def _instrument_sqlite3(tracer_provider: TracerProvider):
     try:
-        from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
+        # Import inside try to keep this integration optional.
+        import opentelemetry.instrumentation.sqlite3  # noqa: F401
 
         pass
-    except ImportError as e:
+    except ImportError:
         pass
 
 
@@ -264,14 +284,14 @@ def _instrument_redis(tracer_provider: TracerProvider):
             request_hook=request_hook,
             response_hook=response_hook,
         )
-    except ImportError as e:
+    except ImportError:
         pass
 
 
 def _instrument_openai(tracer_provider: TracerProvider):
     try:
         pass
-    except ImportError as e:
+    except ImportError:
         pass
 
 

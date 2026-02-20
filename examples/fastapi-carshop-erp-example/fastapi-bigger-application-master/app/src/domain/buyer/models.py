@@ -16,6 +16,5 @@ class Buyer(Base):
     address_city = Column(String)
     address_district = Column(String)
     address_state = Column(String)
-    
+
     sale = relationship("Sale", back_populates="buyer")
-    

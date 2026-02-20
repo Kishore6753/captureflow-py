@@ -8,19 +8,14 @@ This test verifies that SQLAlchemy query spans include execution and result deta
     'db.result_data' in span.attributes (for SELECT queries)
 """
 
-import json
 import os
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from opentelemetry.trace import get_tracer_provider
-from sqlalchemy import Column, Integer, String, create_engine, text
+from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from captureflow.distro import CaptureFlowDistro
 
 # SQLAlchemy setup
 Base = declarative_base()
@@ -39,7 +34,9 @@ def setup_database(engine):
 
 @pytest.fixture(scope="function")
 def engine():
-    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/testdb")
+    DATABASE_URL = os.getenv(
+        "DATABASE_URL", "postgresql://user:password@localhost:5432/testdb"
+    )
     engine = create_engine(DATABASE_URL)
     setup_database(engine)
     yield engine
@@ -76,17 +73,37 @@ def test_sqlalchemy_instrumentation(engine, client, span_exporter):
 
     # Retrieve the spans
     spans = span_exporter.get_finished_spans()
-    sql_spans = [span for span in spans if span.attributes.get("db.system") == "sqlalchemy"]
+    sql_spans = [
+        span for span in spans if span.attributes.get("db.system") == "sqlalchemy"
+    ]
 
     # Filter out bootstrap-related spans
     relevant_sql_spans = [
-        span for span in sql_spans if not span.attributes.get("db.statement", "").startswith("SELECT pg_catalog")
+        span
+        for span in sql_spans
+        if not span.attributes.get("db.statement", "").startswith("SELECT pg_catalog")
     ]
 
-    assert len(relevant_sql_spans) >= 2, "Expected at least two relevant SQLAlchemy spans"
+    assert (
+        len(relevant_sql_spans) >= 2
+    ), "Expected at least two relevant SQLAlchemy spans"
 
-    insert_span = next((span for span in relevant_sql_spans if span.name.startswith("SQLAlchemy: INSERT")), None)
-    select_span = next((span for span in relevant_sql_spans if span.name.startswith("SQLAlchemy: SELECT")), None)
+    insert_span = next(
+        (
+            span
+            for span in relevant_sql_spans
+            if span.name.startswith("SQLAlchemy: INSERT")
+        ),
+        None,
+    )
+    select_span = next(
+        (
+            span
+            for span in relevant_sql_spans
+            if span.name.startswith("SQLAlchemy: SELECT")
+        ),
+        None,
+    )
 
     assert insert_span is not None, "INSERT span not found"
     assert select_span is not None, "SELECT span not found"
@@ -107,10 +124,16 @@ def test_sqlalchemy_instrumentation(engine, client, span_exporter):
 
     # Validate SELECT has the db.result_data attribute
     assert "db.result_data" in select_span.attributes
-    result_data = eval(select_span.attributes["db.result_data"])  # Convert string representation to list of dicts
+    result_data = eval(
+        select_span.attributes["db.result_data"]
+    )  # Convert string representation to list of dicts
     assert isinstance(result_data, list)
     assert len(result_data) > 0
     assert isinstance(result_data[0], dict)
-    assert "users_id" in result_data[0]  # For some reason SQLAlchemy does "SELECT users.id AS users_id"
-    assert "users_name" in result_data[0]  # # For some reason SQLAlchemy does "SELECT users.name AS users_name"
+    assert (
+        "users_id" in result_data[0]
+    )  # For some reason SQLAlchemy does "SELECT users.id AS users_id"
+    assert (
+        "users_name" in result_data[0]
+    )  # # For some reason SQLAlchemy does "SELECT users.name AS users_name"
     assert result_data[0]["users_name"] == "Test User"

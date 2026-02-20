@@ -12,6 +12,5 @@ class Seller(Base):
     name = Column(String)
     cpf = Column(String, index=True)
     phone = Column(String)
-    
+
     sale = relationship("Sale", back_populates="seller")
-    

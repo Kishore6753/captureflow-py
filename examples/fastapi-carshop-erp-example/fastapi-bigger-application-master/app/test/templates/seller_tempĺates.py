@@ -7,11 +7,10 @@ def seller_json():
         "id": 1,
         "name": "João da Silva",
         "cpf": "69285717640",
-        "phone": "1299871234"
+        "phone": "1299871234",
     }
 
 
 @pytest.fixture
 def seller_not_found_error():
-    return { "errors": ["seller does not exist"] }
-
+    return {"errors": ["seller does not exist"]}

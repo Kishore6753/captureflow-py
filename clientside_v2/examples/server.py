@@ -22,7 +22,8 @@ async def external_call_httpx():
 async def external_post_call_httpx():
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            "https://jsonplaceholder.typicode.com/posts", json={"title": "foo", "body": "bar", "userId": 1}
+            "https://jsonplaceholder.typicode.com/posts",
+            json={"title": "foo", "body": "bar", "userId": 1},
         )
     return response.json()
 
@@ -61,19 +62,22 @@ async def read_root():
     data = external_call()
 
     # [HTTP API] Httpx invocation
-    data_post_httpx = await external_post_call_httpx()
-    data_get_httpx = await external_call_httpx()
+    await external_post_call_httpx()
+    await external_call_httpx()
 
     # [DB] SQLite invocation
     data_sqlite = perform_database_operations()
 
     # [DB] Redis invocation
-    data_redis = perform_redis_operations()
+    perform_redis_operations()
 
     return {
         "message": "Hello World",
         "data": data,
-        "items": [{"id": item.id, "name": item.name, "description": item.description} for item in data_sqlite],
+        "items": [
+            {"id": item.id, "name": item.name, "description": item.description}
+            for item in data_sqlite
+        ],
     }
 
 

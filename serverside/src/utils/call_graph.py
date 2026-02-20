@@ -61,8 +61,13 @@ class CallGraph:
             function_name = attrs["function"]
             file_line = attrs["file_line"]
             tag = attrs["tag"]
-            successors = ", ".join(self.graph.nodes[succ]["function"] for succ in self.graph.successors(node))
-            logging.info(f"Function: {function_name} ({file_line}, {tag}) -> {successors or 'No outgoing calls'}")
+            successors = ", ".join(
+                self.graph.nodes[succ]["function"]
+                for succ in self.graph.successors(node)
+            )
+            logging.info(
+                f"Function: {function_name} ({file_line}, {tag}) -> {successors or 'No outgoing calls'}"
+            )
 
     def export_for_graphviz(self) -> None:
         """Exports the graph in a format compatible with Graphviz."""
@@ -82,18 +87,27 @@ class CallGraph:
         changes_made = True
         while changes_made:
             changes_made = False
-            node_depths = self._calculate_depths()  # Recalculate depths on each iteration
-            nodes_by_depth = sorted(self.graph.nodes(), key=lambda n: node_depths.get(n, 0), reverse=True)
+            node_depths = (
+                self._calculate_depths()
+            )  # Recalculate depths on each iteration
+            nodes_by_depth = sorted(
+                self.graph.nodes(), key=lambda n: node_depths.get(n, 0), reverse=True
+            )
 
             for node in nodes_by_depth:
-                if self.graph.has_node(node) and self.graph.nodes[node].get("total_children_count", 0) > 50:
+                if (
+                    self.graph.has_node(node)
+                    and self.graph.nodes[node].get("total_children_count", 0) > 50
+                ):
                     # Remove this node's children
                     children = list(self.graph.successors(node))
                     for child in children:
                         self._remove_descendants(child)
 
                     self.graph.nodes[node]["total_children_count"] = 0
-                    self.graph.nodes[node]["is_node_compressed"] = True  # Mark this node as compressed
+                    self.graph.nodes[node][
+                        "is_node_compressed"
+                    ] = True  # Mark this node as compressed
                     changes_made = True  # Indicate changes for another pass
 
                     # changes_made = False
@@ -117,20 +131,30 @@ class CallGraph:
         node_depths = {}
         # Ensure calculation respects topological order
         try:
-            for node in nx.topological_sort(self.graph):  # Ensures we calculate from leaves to root
-                if not list(self.graph.predecessors(node)):  # If no children, depth is 0
+            for node in nx.topological_sort(
+                self.graph
+            ):  # Ensures we calculate from leaves to root
+                if not list(
+                    self.graph.predecessors(node)
+                ):  # If no children, depth is 0
                     node_depths[node] = 0
                     self.graph.nodes[node]["depth"] = 0
                 else:
                     # Only consider children that are still in the graph
                     # node_depths[node] = max((node_depths[child] + 1 for child in self.graph.successors(node) if child in node_depths), default=0)
                     node_depths[node] = max(
-                        (node_depths[child] + 1 for child in self.graph.predecessors(node) if child in node_depths),
+                        (
+                            node_depths[child] + 1
+                            for child in self.graph.predecessors(node)
+                            if child in node_depths
+                        ),
                         default=0,
                     )
                     self.graph.nodes[node]["depth"] = node_depths[node]
         except nx.NetworkXError as e:
-            logger.error(f"Failed to calculate depths, possibly due to cyclic dependency: {e}")
+            logger.error(
+                f"Failed to calculate depths, possibly due to cyclic dependency: {e}"
+            )
             return {}
         return node_depths
 
@@ -161,12 +185,16 @@ class CallGraph:
 
         for node, attrs in nodes:
             tag = attrs["tag"]
-            node_color = color_mapping.get("EXCEPTION" if attrs["exception"] else tag, "white")
+            node_color = color_mapping.get(
+                "EXCEPTION" if attrs["exception"] else tag, "white"
+            )
 
             if attrs.get("is_node_compressed", False):
                 node_color = compressed_color  # Use special color for compressed nodes
             else:
-                node_color = color_mapping.get(tag, "white")  # Use default colors for tags
+                node_color = color_mapping.get(
+                    tag, "white"
+                )  # Use default colors for tags
 
             label_parts = [
                 f"Function: {attrs['function']}",
@@ -180,7 +208,9 @@ class CallGraph:
                 f"Traceback: {attrs.get('unhandled_exception', {})}",
             ]
 
-            dot.node(node, label="\n".join(label_parts), style="filled", fillcolor=node_color)
+            dot.node(
+                node, label="\n".join(label_parts), style="filled", fillcolor=node_color
+            )
 
         for u, v in edges:
             dot.edge(u, v)
@@ -189,13 +219,11 @@ class CallGraph:
 
 
 if __name__ == "__main__":
-    log_file_path = (
-        "/Users/nikitakutc/projects/captureflow-py/serverside/trace_33c73b42-bf7c-4196-bdd8-048049edff00.json"
-    )
+    log_file_path = "/Users/nikitakutc/projects/captureflow-py/serverside/trace_33c73b42-bf7c-4196-bdd8-048049edff00.json"
     # log_file_path = "/Users/nikitakutc/projects/captureflow-py/serverside/tests/assets/sample_trace.json"
     with open(log_file_path, "r") as file:
         log_data = file.read()
 
     call_graph = CallGraph(log_data)
     call_graph.draw(compressed=True)
-    print(f"Generated call graph has been saved.")
+    print("Generated call graph has been saved.")

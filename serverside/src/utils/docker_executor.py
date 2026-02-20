@@ -24,7 +24,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 class PytestOutput:
-    def __init__(self, test_coverage: dict[Path, TestCoverageItem], pytest_raw_output: str):
+    def __init__(
+        self, test_coverage: dict[Path, TestCoverageItem], pytest_raw_output: str
+    ):
         self.test_coverage = test_coverage
         self.pytest_raw_output = pytest_raw_output
 
@@ -49,14 +51,21 @@ class DockerExecutor:
         return token
 
     def _get_installation_access_token(self, installation_id, jwt):
-        headers = {"Authorization": f"Bearer {jwt}", "Accept": "application/vnd.github.v3+json"}
-        url = f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+        headers = {
+            "Authorization": f"Bearer {jwt}",
+            "Accept": "application/vnd.github.v3+json",
+        }
+        url = (
+            f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+        )
         response = requests.post(url, headers=headers)
         return response.json()["token"]
 
     def _clone_repository(self, repo_url: str, access_token: str, output_path: Path):
         # Modify the repo URL to include the access token
-        auth_repo_url = repo_url.replace("https://", f"https://x-access-token:{access_token}@")
+        auth_repo_url = repo_url.replace(
+            "https://", f"https://x-access-token:{access_token}@"
+        )
         cmd = f"git clone {auth_repo_url} {output_path}"
         logging.info(f"Running command: {cmd}")
         subprocess.run(cmd.split(" "))
@@ -79,12 +88,15 @@ class DockerExecutor:
         # TODO: This is temporary solution for testing.
         test_coverage = {
             f"serverside/{key}": TestCoverageItem(
-                coverage=float(info_dict["summary"]["percent_covered"]), missing_lines=list(info_dict["missing_lines"])
+                coverage=float(info_dict["summary"]["percent_covered"]),
+                missing_lines=list(info_dict["missing_lines"]),
             )
             for key, info_dict in coverage_output["files"].items()
         }
 
-        return PytestOutput(test_coverage=test_coverage, pytest_raw_output=pytest_raw_output)
+        return PytestOutput(
+            test_coverage=test_coverage, pytest_raw_output=pytest_raw_output
+        )
 
     def _create_files(self, repo_dir: Path, new_files: dict[str, str]):
         for file_path, contents in new_files.items():
@@ -127,11 +139,15 @@ class DockerExecutor:
 def main():
     docker_executor = DockerExecutor("https://github.com/CaptureFlow/captureflow-py")
     # Valid input
-    pytest_output = docker_executor.execute_with_new_files({"serverside/tests/test_a.py": "print(1)"})
+    pytest_output = docker_executor.execute_with_new_files(
+        {"serverside/tests/test_a.py": "print(1)"}
+    )
     print(pytest_output.test_coverage)
 
     # Invalid input
-    pytest_output = docker_executor.execute_with_new_files({"serverside/tests/test_a.py": "ppprint(1)"})
+    pytest_output = docker_executor.execute_with_new_files(
+        {"serverside/tests/test_a.py": "ppprint(1)"}
+    )
     print(pytest_output.test_coverage)
 
 

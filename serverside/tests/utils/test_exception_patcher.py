@@ -26,7 +26,9 @@ def disable_network_access():
 
 @pytest.fixture
 def sample_trace_json():
-    trace_path = Path(__file__).parent.parent / "assets" / "sample_trace_with_exception.json"
+    trace_path = (
+        Path(__file__).parent.parent / "assets" / "sample_trace_with_exception.json"
+    )
     with open(trace_path) as f:
         return json.load(f)
 
@@ -36,13 +38,17 @@ def mock_redis_client(sample_trace_json):
     with patch("redis.Redis") as MockRedis:
         mock_redis_client = MockRedis()
         mock_redis_client.scan_iter.return_value = [f"key:{i}" for i in range(3)]
-        mock_redis_client.get.side_effect = lambda k: json.dumps(sample_trace_json).encode("utf-8")
+        mock_redis_client.get.side_effect = lambda k: json.dumps(
+            sample_trace_json
+        ).encode("utf-8")
         yield mock_redis_client
 
 
 @pytest.fixture
 def mock_openai_helper():
-    with patch("src.utils.integrations.openai_integration.OpenAIHelper") as MockOpenAIHelper:
+    with patch(
+        "src.utils.integrations.openai_integration.OpenAIHelper"
+    ) as MockOpenAIHelper:
         mock_helper = MockOpenAIHelper()
         # Mocking expected ChatGPT response structure
         dummy_function_code = "def dummy_function(): pass"
@@ -96,17 +102,25 @@ def mock_repo_helper(github_data_mapping):
                     callgraph.graph.nodes[node_id].update(enriched_node)
 
     mock_instance = Mock()
-    mock_instance._get_repo_by_url.return_value = Mock(html_url="http://sample.repo.url")
-    mock_instance.enrich_callgraph_with_github_context.side_effect = mock_enrich_callgraph_with_github_context
+    mock_instance._get_repo_by_url.return_value = Mock(
+        html_url="http://sample.repo.url"
+    )
+    mock_instance.enrich_callgraph_with_github_context.side_effect = (
+        mock_enrich_callgraph_with_github_context
+    )
 
     return mock_instance
 
 
 def test_bug_orchestrator_run(mock_redis_client, mock_openai_helper, mock_repo_helper):
-    with patch("src.utils.exception_patcher.RepoHelper", return_value=mock_repo_helper), patch(
+    with patch(
+        "src.utils.exception_patcher.RepoHelper", return_value=mock_repo_helper
+    ), patch(
         "src.utils.exception_patcher.OpenAIHelper", return_value=mock_openai_helper
     ):
-        orchestrator = ExceptionPatcher(redis_client=mock_redis_client, repo_url="http://sample.repo.url")
+        orchestrator = ExceptionPatcher(
+            redis_client=mock_redis_client, repo_url="http://sample.repo.url"
+        )
         orchestrator.run()
 
         # Call arguments for mock_openai_helper.call_chatgpt
@@ -116,13 +130,18 @@ def test_bug_orchestrator_run(mock_redis_client, mock_openai_helper, mock_repo_h
         assert "Function: calculate_average" in actual_prompt
         assert "Function: calculate_avg" in actual_prompt
         assert "ZeroDivisionError - division by zero" in actual_prompt
-        expected_function_implementation_snippets = ["def calculate_average(): pass", "def calculate_sum(): pass"]
+        expected_function_implementation_snippets = [
+            "def calculate_average(): pass",
+            "def calculate_sum(): pass",
+        ]
         for snippet in expected_function_implementation_snippets:
             assert snippet in actual_prompt
 
         # Validate the call to create_pull_request_with_new_function
         mock_repo_helper.create_pull_request_with_new_function.assert_called()
-        called_args = mock_repo_helper.create_pull_request_with_new_function.call_args[0]
+        called_args = mock_repo_helper.create_pull_request_with_new_function.call_args[
+            0
+        ]
         node_arg = called_args[0]
 
         # Validate key fields of the node argument

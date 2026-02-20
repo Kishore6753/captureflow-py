@@ -33,7 +33,9 @@ def test_httpx_instrumentation(span_exporter):
     spans = span_exporter.get_finished_spans()
     print(f"Total spans: {len(spans)}")
     for span in spans:
-        print(f"[HTTPX] Span name: {span.name}, Kind: {span.kind}, Attributes: {span.attributes}")
+        print(
+            f"[HTTPX] Span name: {span.name}, Kind: {span.kind}, Attributes: {span.attributes}"
+        )
 
     http_spans = [span for span in spans if span.name.startswith("HTTP")]
     assert len(http_spans) == 1, "Expected at least one HTTP span"
@@ -41,7 +43,10 @@ def test_httpx_instrumentation(span_exporter):
     external_call_span = None
 
     for span in http_spans:
-        if span.attributes.get("http.request.url") == "https://jsonplaceholder.typicode.com/posts/1":
+        if (
+            span.attributes.get("http.request.url")
+            == "https://jsonplaceholder.typicode.com/posts/1"
+        ):
             external_call_span = span
             break
 
@@ -49,7 +54,10 @@ def test_httpx_instrumentation(span_exporter):
 
     # Validate external call span
     assert external_call_span.attributes["http.request.method"] == "GET"
-    assert external_call_span.attributes["http.request.url"] == "https://jsonplaceholder.typicode.com/posts/1"
+    assert (
+        external_call_span.attributes["http.request.url"]
+        == "https://jsonplaceholder.typicode.com/posts/1"
+    )
     assert "http.request.headers" in external_call_span.attributes
     assert external_call_span.attributes["http.response.status_code"] == 200
     assert "http.response.headers" in external_call_span.attributes

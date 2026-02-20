@@ -26,7 +26,9 @@ def mock_db():
     with patch("sqlite3.connect") as mock_connect:
         # Create a cursor object from a connection object
         mock_cursor = MagicMock()
-        mock_connect.return_value.__enter__.return_value.cursor.return_value = mock_cursor
+        mock_connect.return_value.__enter__.return_value.cursor.return_value = (
+            mock_cursor
+        )
         yield mock_cursor
 
 
@@ -41,7 +43,8 @@ def test_endpoint_with_db_interaction(client, test_payload, mock_db):
         "user_id": test_payload["user_id"],
         "company_id": test_payload["company_id"],
         "amount": test_payload["amount"],
-        "score": test_payload["amount"] / sum([50, 60, 70, 80, 90]),  # Example calculation
+        "score": test_payload["amount"]
+        / sum([50, 60, 70, 80, 90]),  # Example calculation
     }
 
     # That's how you would mock DB interactions

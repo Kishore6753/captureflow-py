@@ -11,15 +11,16 @@ from opentelemetry.instrumentation.pymongo import PymongoInstrumentor
 from functools import wraps
 import json
 
+
 # Configure OpenTelemetry
 def configure_tracer():
     provider = TracerProvider()
     trace.set_tracer_provider(provider)
-    
+
     # Configure Jaeger Exporter
     jaeger_exporter = JaegerExporter(
-        agent_host_name='localhost',  # Change to your Jaeger agent host
-        agent_port=6831               # Change to your Jaeger agent port
+        agent_host_name="localhost",  # Change to your Jaeger agent host
+        agent_port=6831,  # Change to your Jaeger agent port
     )
     provider.add_span_processor(SimpleSpanProcessor(jaeger_exporter))
 
@@ -28,6 +29,7 @@ def configure_tracer():
     HTTPXClientInstrumentor().instrument()
     Psycopg2Instrumentor().instrument()
     PymongoInstrumentor().instrument()
+
 
 # Decorator to trace function calls
 def trace_function(func):
@@ -45,7 +47,9 @@ def trace_function(func):
                 span.record_exception(e)
                 span.set_attribute("error", True)
                 raise
+
     return wrapper
+
 
 # Configure the tracer when the module is imported
 configure_tracer()

@@ -35,9 +35,13 @@ async def score_transaction(transaction: Transaction):
     curl -X 'POST' 'http://127.0.0.1:1337/score_transaction/' -H 'accept: application/json' -H 'Content-Type: application/json' -d '{"user_id": "user123", "company_id": "company456", "amount": 100.0}'
     ```
     """
-    score = utilz.calculate_score(transaction.user_id, transaction.company_id, transaction.amount)
+    score = utilz.calculate_score(
+        transaction.user_id, transaction.company_id, transaction.amount
+    )
     try:
-        utilz.add_transaction(transaction.user_id, transaction.company_id, transaction.amount, score)
+        utilz.add_transaction(
+            transaction.user_id, transaction.company_id, transaction.amount, score
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return {

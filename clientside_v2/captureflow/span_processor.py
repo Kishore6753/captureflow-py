@@ -46,7 +46,9 @@ def is_user_code(code: CodeType) -> bool:
     """
     Determine if a code object is from user code.
     """
-    return not any(str(Path(code.co_filename).absolute()).startswith(prefix) for prefix in PREFIXES)
+    return not any(
+        str(Path(code.co_filename).absolute()).startswith(prefix) for prefix in PREFIXES
+    )
 
 
 def get_user_stack_info():

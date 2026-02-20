@@ -30,14 +30,19 @@ def test_requests_instrumentation(span_exporter):
 
     # Retrieve the spans
     spans = span_exporter.get_finished_spans()
-    http_spans = [span for span in spans if span.attributes.get("http.method") is not None]
+    http_spans = [
+        span for span in spans if span.attributes.get("http.method") is not None
+    ]
 
     assert len(http_spans) >= 1, "Expected at least one HTTP span"
 
     external_call_span = None
 
     for span in http_spans:
-        if span.attributes.get("http.url") == "https://jsonplaceholder.typicode.com/posts/1":
+        if (
+            span.attributes.get("http.url")
+            == "https://jsonplaceholder.typicode.com/posts/1"
+        ):
             external_call_span = span
             break
 
@@ -45,7 +50,10 @@ def test_requests_instrumentation(span_exporter):
 
     # Validate external call span
     assert external_call_span.attributes["http.method"] == "GET"
-    assert external_call_span.attributes["http.url"] == "https://jsonplaceholder.typicode.com/posts/1"
+    assert (
+        external_call_span.attributes["http.url"]
+        == "https://jsonplaceholder.typicode.com/posts/1"
+    )
     assert external_call_span.attributes["http.status_code"] == 200
     assert "http.response.body" in external_call_span.attributes
 

@@ -39,7 +39,9 @@ def test_flask_instrumentation(span_exporter, client):
     # Debug: Print all spans
     print("All spans:")
     for span in spans:
-        print(f"Span name: {span.name}, Kind: {span.kind}, Attributes: {span.attributes}")
+        print(
+            f"Span name: {span.name}, Kind: {span.kind}, Attributes: {span.attributes}"
+        )
 
     assert len(flask_spans) == 1, "Expected at least one Flask span"
 

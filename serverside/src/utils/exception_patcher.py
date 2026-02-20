@@ -37,7 +37,9 @@ class ExceptionPatcher:
                 logger.info("No exception chains found in this graph.")
                 continue
             else:
-                logger.info(f"Found a graph that contained unhandled exception chain {exception_chains}")
+                logger.info(
+                    f"Found a graph that contained unhandled exception chain {exception_chains}"
+                )
 
             for exception_chain in exception_chains:
                 context = self.fetch_exception_context(graph, exception_chain)
@@ -49,7 +51,9 @@ class ExceptionPatcher:
                         gpt_response_dict = json.loads(json_str)
                         change_reasoning = gpt_response_dict.get("change_reasoning", "")
                         function_name = gpt_response_dict.get("function_name", "")
-                        code_block = self.gpt_helper.extract_first_code_block(gpt_response)
+                        code_block = self.gpt_helper.extract_first_code_block(
+                            gpt_response
+                        )
 
                         matched_node_ids = graph.find_node_by_fname(function_name)
                         if matched_node_ids:
@@ -121,7 +125,9 @@ class ExceptionPatcher:
 
         # Identify nodes where exceptions were raised.
         raised_exception_nodes = [
-            (node_id, data) for node_id, data in graph.graph.nodes(data=True) if data.get("did_raise")
+            (node_id, data)
+            for node_id, data in graph.graph.nodes(data=True)
+            if data.get("did_raise")
         ]
         visited = set()
 
@@ -135,27 +141,36 @@ class ExceptionPatcher:
             # Adjacent nodes with same exception_type => part of same exception propagation chain
             start_exception_type = start_data["unhandled_exception"]["type"]
 
-            for neighbor in list(graph.graph.predecessors(start_node)) + list(graph.graph.successors(start_node)):
+            for neighbor in list(graph.graph.predecessors(start_node)) + list(
+                graph.graph.successors(start_node)
+            ):
                 if neighbor in visited:
                     continue
 
                 neighbor_data = graph.graph.nodes[neighbor]
                 if (
                     neighbor_data.get("did_raise")
-                    and neighbor_data["unhandled_exception"]["type"] == start_exception_type
+                    and neighbor_data["unhandled_exception"]["type"]
+                    == start_exception_type
                 ):
                     current_sequence.append(neighbor)
                     visited.add(neighbor)
 
             # There are quite a lot if internal (invisible) exception chains happening inside libraries
             # There is no point in refactoring them => prune and skip if needed
-            pruned_sequence = [node for node in current_sequence if graph.graph.nodes[node].get("tag") != "STDLIB"]
+            pruned_sequence = [
+                node
+                for node in current_sequence
+                if graph.graph.nodes[node].get("tag") != "STDLIB"
+            ]
             if len(pruned_sequence) >= 1:
                 exception_sequences.append(current_sequence)
 
         return exception_sequences
 
-    def fetch_exception_context(self, graph: CallGraph, exception_chain: List[str]) -> Dict[str, Any]:
+    def fetch_exception_context(
+        self, graph: CallGraph, exception_chain: List[str]
+    ) -> Dict[str, Any]:
         """
         Gathers contextual information for nodes involved in exception propagation, including details
         about the exception nodes, and any relevant context from non-exceptional ancestors and descendants.
@@ -197,19 +212,25 @@ class ExceptionPatcher:
             for parent_id in graph.graph.predecessors(node_id):
                 if parent_id not in exception_chain:
                     parent_data = graph.graph.nodes[parent_id]
-                    node_context["context_parents"].append(self.format_node_details(parent_data, include_code=True))
+                    node_context["context_parents"].append(
+                        self.format_node_details(parent_data, include_code=True)
+                    )
 
             # Add any children called by this node that are not part of the exception chain
             for child_id in graph.graph.successors(node_id):
                 if child_id not in exception_chain:
                     child_data = graph.graph.nodes[child_id]
-                    node_context["context_children"].append(self.format_node_details(child_data, include_code=True))
+                    node_context["context_children"].append(
+                        self.format_node_details(child_data, include_code=True)
+                    )
 
             chain_context["exception_nodes"].append(node_context)
 
         return chain_context
 
-    def format_node_details(self, node_data: Dict[str, Any], include_code: bool = False) -> Dict[str, Any]:
+    def format_node_details(
+        self, node_data: Dict[str, Any], include_code: bool = False
+    ) -> Dict[str, Any]:
         """
         Prepares detailed information of a node for further analysis.
 
@@ -233,11 +254,18 @@ class ExceptionPatcher:
             "exception_info": node_data.get("unhandled_exception"),
             "return_value": node_data.get("return_value"),
             "function_implementation": (
-                node_data.get("github_function_implementation").get("content", "Not available")
-                if isinstance(node_data.get("github_function_implementation"), dict) and include_code
+                node_data.get("github_function_implementation").get(
+                    "content", "Not available"
+                )
+                if isinstance(node_data.get("github_function_implementation"), dict)
+                and include_code
                 else "Not available"
             ),
-            "file_content": node_data.get("github_file_content", "Not available") if include_code else None,
+            "file_content": (
+                node_data.get("github_file_content", "Not available")
+                if include_code
+                else None
+            ),
         }
 
         # Clean up None values
@@ -255,7 +283,9 @@ class ExceptionPatcher:
         for predecessor in graph.graph.predecessors(node_id):
             parent_data = graph.graph.nodes[predecessor]
             parents.append(self.format_node_details(parent_data, include_code))
-            parents.extend(self.fetch_parents(graph, predecessor, depth - 1, include_code))
+            parents.extend(
+                self.fetch_parents(graph, predecessor, depth - 1, include_code)
+            )
         return parents
 
     def fetch_children(
@@ -270,7 +300,9 @@ class ExceptionPatcher:
         for successor in graph.graph.successors(node_id):
             child_data = graph.graph.nodes[successor]
             children.append(self.format_node_details(child_data, include_code))
-            children.extend(self.fetch_children(graph, successor, depth - 1, include_code))
+            children.extend(
+                self.fetch_children(graph, successor, depth - 1, include_code)
+            )
         return children
 
     def generate_fix_prompt_based_on_context(self, context: Dict[str, Any]) -> str:
@@ -280,16 +312,10 @@ class ExceptionPatcher:
             node_details = node_context["node_details"]
             is_last_node = index == len(context["exception_nodes"]) - 1
 
-            function_header = (
-                f"\n{'-'*20}\nFunction: {node_details['function_name']} at {node_details['file_line']}\n{'-'*20}"
-            )
-            exception_info = (
-                f"Exception Type: {node_details['exception_info']['type']} - {node_details['exception_info']['value']}"
-            )
+            function_header = f"\n{'-'*20}\nFunction: {node_details['function_name']} at {node_details['file_line']}\n{'-'*20}"
+            exception_info = f"Exception Type: {node_details['exception_info']['type']} - {node_details['exception_info']['value']}"
             inputs = f"Inputs (serialization method described at the end):\n{json.dumps(node_details['arguments'], indent=2, default=str)}"
-            outputs = (
-                f"Outputs:\n{json.dumps(node_details.get('return_value', 'No return value'), indent=2, default=str)}"
-            )
+            outputs = f"Outputs:\n{json.dumps(node_details.get('return_value', 'No return value'), indent=2, default=str)}"
             implementation = f"Function Implementation:\n```python\n{node_details['function_implementation']}\n```"
 
             node_summary = f"{function_header}\n{exception_info}\n{inputs}\n{outputs}\n{implementation}"
