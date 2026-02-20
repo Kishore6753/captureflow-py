@@ -3,10 +3,9 @@ from logging import getLogger
 from pathlib import Path
 from types import CodeType, FrameType
 
+import captureflow
 import opentelemetry
 from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
-
-import captureflow
 
 logger = getLogger(__name__)
 

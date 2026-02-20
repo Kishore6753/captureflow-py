@@ -1,8 +1,9 @@
 from datetime import datetime
+
 from pydantic import BaseModel
 
-from ..car.schemas import Car
 from ..buyer.schemas import Buyer
+from ..car.schemas import Car
 from ..seller.schemas import Seller
 
 

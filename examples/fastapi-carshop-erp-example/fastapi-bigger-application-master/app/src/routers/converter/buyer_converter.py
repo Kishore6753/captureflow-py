@@ -1,6 +1,6 @@
 from typing import List
 
-from ...domain.buyer import schemas, models
+from ...domain.buyer import models, schemas
 
 
 def convert(db_buyer: models.Buyer):

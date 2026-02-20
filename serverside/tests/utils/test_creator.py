@@ -12,9 +12,7 @@ def disable_network_access():
         "socket.create_connection"
     ) as mock_create_conn:
         mock_socket.side_effect = Exception("Network access not allowed during tests!")
-        mock_create_conn.side_effect = Exception(
-            "Network access not allowed during tests!"
-        )
+        mock_create_conn.side_effect = Exception("Network access not allowed during tests!")
         yield
 
 
@@ -55,9 +53,7 @@ def mock_redis_client(sample_trace_json):
 
 @pytest.fixture
 def mock_openai_helper():
-    with patch(
-        "src.utils.integrations.openai_integration.OpenAIHelper"
-    ) as MockOpenAIHelper:
+    with patch("src.utils.integrations.openai_integration.OpenAIHelper") as MockOpenAIHelper:
         mock_helper = MockOpenAIHelper()
         mock_helper.call_chatgpt.side_effect = [
             json.dumps(
@@ -73,9 +69,7 @@ def mock_openai_helper():
             ),  # Second call for INTERNAL function
             "```python\ndef test_calculate_average(): assert True```",  # Second call for generating full pytest code
         ]
-        mock_helper.extract_first_code_block.return_value = (
-            "def test_calculate_average(): assert True"
-        )
+        mock_helper.extract_first_code_block.return_value = "def test_calculate_average(): assert True"
         yield mock_helper
 
 
@@ -105,9 +99,7 @@ def mock_repo_helper(github_data_mapping):
                     callgraph.graph.nodes[node_id].update(enriched_node)
 
     mock_instance = Mock()
-    mock_instance._get_repo_by_url.return_value = Mock(
-        html_url="http://sample.repo.url"
-    )
+    mock_instance._get_repo_by_url.return_value = Mock(html_url="http://sample.repo.url")
     mock_instance.enrich_callgraph_with_github_context.side_effect = (
         mock_enrich_callgraph_with_github_context
     )
@@ -128,14 +120,11 @@ def test_test_coverage_creator_run(
 ):
     from src.utils.test_creator import TestCoverageCreator
 
-    with patch(
-        "src.utils.test_creator.RepoHelper", return_value=mock_repo_helper
-    ), patch(
+    with patch("src.utils.test_creator.RepoHelper", return_value=mock_repo_helper), patch(
         "src.utils.test_creator.OpenAIHelper", return_value=mock_openai_helper
     ), patch(
         "src.utils.docker_executor.DockerExecutor", return_value=mock_docker_executor
     ):
-
         test_creator = TestCoverageCreator(
             redis_client=mock_redis_client, repo_url="http://sample.repo.url"
         )

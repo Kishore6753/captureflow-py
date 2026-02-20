@@ -1,10 +1,8 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from fastapi import HTTPException
-
-from . import repository, schemas
-
 from ....resources.strings import CAR_DOES_NOT_EXIST_ERROR
+from . import repository, schemas
 
 
 def create_car(db: Session, car: schemas.CarCreate):

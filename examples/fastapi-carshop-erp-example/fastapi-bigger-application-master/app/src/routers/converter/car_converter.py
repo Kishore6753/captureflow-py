@@ -1,6 +1,6 @@
 from typing import List
 
-from ...domain.car import schemas, models
+from ...domain.car import models, schemas
 
 
 def convert(db_car: models.Car):

@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from ...src.database import Base
-
 from ...src.dependencies import get_db
 
 ## Configure SQLite embedded for file "test.db"
@@ -36,7 +35,6 @@ def truncate_tables(tables):
     """Truncate rows of all input tables"""
 
     with engine.connect() as con:
-
         IGNORE_CONSTRAINTS = """PRAGMA ignore_check_constraints = 0"""
         DISABLE_IGNORE_CONSTRAINTS = """PRAGMA ignore_check_constraints = 1"""
 

@@ -1,11 +1,9 @@
-from sqlalchemy.orm import Session
-
 # TODO: Remove this dependency
 from fastapi import HTTPException
-
-from . import models, schemas
+from sqlalchemy.orm import Session
 
 from ....resources.strings import STOCK_OUT_OF_STOCK_ERROR
+from . import models, schemas
 
 
 def create_stock(db: Session, stock: schemas.StockCreate):

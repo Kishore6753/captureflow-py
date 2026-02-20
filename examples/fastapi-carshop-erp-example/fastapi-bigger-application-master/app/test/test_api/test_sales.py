@@ -1,19 +1,15 @@
 from fastapi.testclient import TestClient
 
-from ..database_test import configure_test_database, clear_database
-
-
+from ...main import app
 from ..base_insertion import (
-    insert_into_sales,
-    insert_into_cars,
-    insert_into_stocks,
-    insert_into_sellers,
     insert_into_buyers,
+    insert_into_cars,
+    insert_into_sales,
+    insert_into_sellers,
+    insert_into_stocks,
     read_stock_by_id,
 )
-
-from ...main import app
-
+from ..database_test import clear_database, configure_test_database
 
 client = TestClient(app)
 
@@ -92,9 +88,7 @@ def test_read_sales(
     assert response.json() == [sale_response_json]
 
 
-def test_delete_sale(
-    car_json, stock_request_json, seller_json, buyer_json, sale_request_json
-):
+def test_delete_sale(car_json, stock_request_json, seller_json, buyer_json, sale_request_json):
     """Delete a sale with success"""
     insert_into_cars(car_json)
     insert_into_stocks(stock_request_json)

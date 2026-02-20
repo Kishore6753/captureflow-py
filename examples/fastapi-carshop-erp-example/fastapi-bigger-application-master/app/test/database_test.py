@@ -1,7 +1,5 @@
 from .config import database_test_config
-
 from .database_tables import tables
-
 
 ###
 # Suport test database dependencies

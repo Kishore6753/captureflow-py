@@ -1,21 +1,13 @@
 from fastapi import Depends, FastAPI, Request, Response
-
 from fastapi.middleware.cors import CORSMiddleware
-
 from starlette.exceptions import HTTPException
 
+from .src.config import ALLOWED_HOSTS, API_PREFIX
+from .src.database import Base, SessionLocal, engine
 from .src.dependencies import get_token_header
-
 from .src.internal import admin
-
 from .src.routers.api import router as router_api
-
-from .src.database import engine, SessionLocal, Base
-
-from .src.config import API_PREFIX, ALLOWED_HOSTS
-
 from .src.routers.handlers.http_error import http_error_handler
-
 
 ###
 # Main application file

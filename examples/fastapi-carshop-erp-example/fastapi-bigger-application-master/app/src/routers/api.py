@@ -1,8 +1,7 @@
 from fastapi import APIRouter
 
 from ..config import ROUTE_PREFIX_V1
-
-from . import items, users, cars, stocks, sellers, buyers, sales, auth
+from . import auth, buyers, cars, items, sales, sellers, stocks, users
 
 router = APIRouter()
 

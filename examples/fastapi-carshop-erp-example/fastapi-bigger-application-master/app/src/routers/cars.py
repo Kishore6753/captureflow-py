@@ -1,13 +1,10 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_db
-
-from ..domain.car import service, schemas
-
+from ..domain.car import schemas, service
 
 router = APIRouter(
     prefix="/cars",

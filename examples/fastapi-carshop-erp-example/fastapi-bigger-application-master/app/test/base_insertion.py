@@ -2,7 +2,6 @@ from sqlalchemy.sql import text
 
 from .config import database_test_config
 
-
 ###
 # Suport test for database insertions
 ###
@@ -13,7 +12,6 @@ engine = database_test_config.engine
 def insert_into_cars(input):
     """Insert into table cars"""
     with engine.connect() as con:
-
         data = (input,)
 
         statement = text(
@@ -27,7 +25,6 @@ def insert_into_cars(input):
 def insert_into_sellers(input):
     """Insert into table sellers"""
     with engine.connect() as con:
-
         data = (input,)
 
         statement = text(
@@ -41,7 +38,6 @@ def insert_into_sellers(input):
 def insert_into_buyers(input):
     """Insert into table buyers"""
     with engine.connect() as con:
-
         data = (
             {
                 "id": input["id"],
@@ -70,7 +66,6 @@ def insert_into_buyers(input):
 def insert_into_stocks(input):
     """Insert into table stocks"""
     with engine.connect() as con:
-
         data = (input,)
 
         statement = text(
@@ -84,7 +79,6 @@ def insert_into_stocks(input):
 def insert_into_sales(input):
     """Insert into table sales"""
     with engine.connect() as con:
-
         data = (input,)
 
         statement = text(

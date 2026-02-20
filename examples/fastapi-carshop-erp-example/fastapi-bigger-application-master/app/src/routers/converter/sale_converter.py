@@ -1,12 +1,7 @@
 from typing import List
 
-from . import buyer_converter
-
-from . import seller_converter
-
-from . import car_converter
-
-from ...domain.sale import schemas, models
+from ...domain.sale import models, schemas
+from . import buyer_converter, car_converter, seller_converter
 
 
 def convert(db_sale: models.Sale):

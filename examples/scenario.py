@@ -1,5 +1,6 @@
-import requests
 import random
+
+import requests
 
 BASE_URL = "http://localhost:9999"
 

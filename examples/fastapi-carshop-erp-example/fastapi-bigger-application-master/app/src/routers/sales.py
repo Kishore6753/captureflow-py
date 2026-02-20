@@ -1,28 +1,22 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
-
 from sqlalchemy.orm import Session
 
+from ...resources.strings import (
+    BUYER_DOES_NOT_EXIST_ERROR,
+    CAR_DOES_NOT_EXIST_ERROR,
+    SALES_DOES_NOT_EXIST_ERROR,
+    SELLER_DOES_NOT_EXIST_ERROR,
+    STOCK_DOES_NOT_EXIST_ERROR,
+)
 from ..dependencies import get_db
-
-from ..domain.sale import service, schemas
-
-from ..domain.car import repository as car_repository
-
 from ..domain.buyer import service as buyer_service
-
+from ..domain.car import repository as car_repository
+from ..domain.sale import schemas, service
 from ..domain.seller import service as seller_service
-
 from ..domain.stock import service as stock_service
-
 from .converter import sale_converter
-
-from ...resources.strings import CAR_DOES_NOT_EXIST_ERROR
-from ...resources.strings import STOCK_DOES_NOT_EXIST_ERROR
-from ...resources.strings import BUYER_DOES_NOT_EXIST_ERROR
-from ...resources.strings import SELLER_DOES_NOT_EXIST_ERROR
-from ...resources.strings import SALES_DOES_NOT_EXIST_ERROR
 
 router = APIRouter(
     prefix="/sales",

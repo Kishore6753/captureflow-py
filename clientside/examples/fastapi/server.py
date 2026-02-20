@@ -1,8 +1,7 @@
 import utilz
+from captureflow.tracer import Tracer
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-
-from captureflow.tracer import Tracer
 
 tracer = Tracer(
     repo_url="https://github.com/CaptureFlow/captureflow-py",

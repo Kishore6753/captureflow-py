@@ -1,12 +1,8 @@
 from fastapi.testclient import TestClient
 
-from ..database_test import configure_test_database, clear_database
-
-
-from ..base_insertion import insert_into_stocks, insert_into_cars
-
 from ...main import app
-
+from ..base_insertion import insert_into_cars, insert_into_stocks
+from ..database_test import clear_database, configure_test_database
 
 client = TestClient(app)
 
@@ -69,18 +65,14 @@ def test_delete_stock(car_json, stock_request_json):
     assert response.json() is True
 
 
-def test_create_stock_car_not_found(
-    stock_request_json, stock_response_json, car_not_found_error
-):
+def test_create_stock_car_not_found(stock_request_json, stock_response_json, car_not_found_error):
     """Create a stock with success"""
     response = client.post(stocks_route + "/", json=stock_request_json)
     assert response.status_code == 404
     assert response.json() == car_not_found_error
 
 
-def test_create_stock_unique_car_uk_error(
-    car_json, stock_request_json, stock_already_exist
-):
+def test_create_stock_unique_car_uk_error(car_json, stock_request_json, stock_already_exist):
     """Create a stock with success"""
     insert_into_cars(car_json)
     insert_into_stocks(stock_request_json)
@@ -97,9 +89,7 @@ def test_read_stock_not_found(stock_not_found_error):
     assert response.json() == stock_not_found_error
 
 
-def test_read_stock_by_car_not_found(
-    car_json, stock_request_json, stock_response_json, stock_not_found_error
-):
+def test_read_stock_by_car_not_found(car_json, stock_request_json, stock_response_json, stock_not_found_error):
     """Read a stock with success"""
     request_url = stocks_route + "/cars/1"
     response = client.get(request_url)

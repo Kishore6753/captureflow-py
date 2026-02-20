@@ -4,7 +4,6 @@ from unittest.mock import patch
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from src.captureflow.tracer import Tracer
 
 app = FastAPI()

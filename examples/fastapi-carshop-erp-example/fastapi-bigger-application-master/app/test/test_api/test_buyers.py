@@ -1,12 +1,8 @@
 from fastapi.testclient import TestClient
 
-from ..database_test import configure_test_database, clear_database
-
-from ..base_insertion import insert_into_buyers
-
-
 from ...main import app
-
+from ..base_insertion import insert_into_buyers
+from ..database_test import clear_database, configure_test_database
 
 client = TestClient(app)
 

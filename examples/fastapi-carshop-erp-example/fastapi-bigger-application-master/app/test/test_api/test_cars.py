@@ -1,12 +1,8 @@
 from fastapi.testclient import TestClient
 
-from ..database_test import configure_test_database, clear_database
-
-from ..base_insertion import insert_into_cars
-
-
 from ...main import app
-
+from ..base_insertion import insert_into_cars
+from ..database_test import clear_database, configure_test_database
 
 CAR_ROUTE = "/api/v1/cars"
 

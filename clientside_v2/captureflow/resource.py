@@ -1,8 +1,7 @@
 import platform
 
-from opentelemetry.sdk.resources import Resource
-
 from captureflow.config import CF_SERVICE_NAME
+from opentelemetry.sdk.resources import Resource
 
 
 def get_resource():

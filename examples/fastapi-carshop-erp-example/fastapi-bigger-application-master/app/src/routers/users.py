@@ -1,13 +1,10 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
-
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_db
-
-from ..domain.user import service, schemas
-
+from ..domain.user import schemas, service
 
 router = APIRouter(tags=["users"])
 
